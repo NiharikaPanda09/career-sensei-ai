@@ -9,9 +9,15 @@ export async function updateUser(data) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  let user;
+  try {
+    user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+  } catch (error) {
+    console.error("Database error while fetching user:", error.message);
+    throw new Error("Database unavailable");
+  }
 
   if (!user) throw new Error("User not found");
 
@@ -30,7 +36,7 @@ export async function updateUser(data) {
         if (!industryInsight) {
           const insights = await generateAIInsights(data.industry);
 
-          industryInsight = await db.industryInsight.create({
+          industryInsight = await tx.industryInsight.create({
             data: {
               industry: data.industry,
               ...insights,
@@ -60,7 +66,7 @@ export async function updateUser(data) {
     );
 
     revalidatePath("/");
-    return result.user;
+    return result.updatedUser;
   } catch (error) {
     console.error("Error updating user and industry:", error.message);
     throw new Error("Failed to update profile");
@@ -71,27 +77,20 @@ export async function getUserOnboardingStatus() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
 
-  const user = await db.user.findUnique({
-    where: { clerkUserId: userId },
-  });
+  let user;
+  try {
+    user = await db.user.findUnique({
+      where: { clerkUserId: userId },
+      select: { industry: true },
+    });
+  } catch (error) {
+    console.error("Database error while fetching onboarding status:", error.message);
+    throw new Error("Database unavailable");
+  }
 
   if (!user) throw new Error("User not found");
 
-  try {
-    const user = await db.user.findUnique({
-      where: {
-        clerkUserId: userId,
-      },
-      select: {
-        industry: true,
-      },
-    });
-
-    return {
-      isOnboarded: !!user?.industry,
-    };
-  } catch (error) {
-    console.error("Error checking onboarding status:", error);
-    throw new Error("Failed to check onboarding status");
-  }
+  return {
+    isOnboarded: !!user.industry,
+  };
 }
