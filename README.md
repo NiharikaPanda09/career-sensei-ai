@@ -53,4 +53,4 @@ Here are some screenshots of the application:
 ## 6. Live Demo
 
 Check out the final deployed app on Vercel:  
-[https://ai-career-coach-peach.vercel.app/](https://ai-career-coach-peach.vercel.app/)
+[[https://ai-career-coach-peach.vercel.app/](https://career-sensei-ai.vercel.app/))
